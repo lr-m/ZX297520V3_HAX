@@ -1,6 +1,6 @@
 <p align="center">
 
-  <img src="images/logo.png" width="400">
+  <img src="images/readme/logo.png" width="250">
 
 </p>
 
@@ -49,7 +49,47 @@ Exploits a pre-auth file write vulnerability to replace the generated QR code di
 python3 ZX297520V3_hax.py overwrite_qr_code
 ```
 
-![alt text](images/file_write.png)
+<img src="images/readme/file_write.png" width="250">
+
+### `screen_run`
+
+Uses auth bypass to get the admin password, file write to upload compiled binaries, and command injections to run them - resulting in the screen displaying something.
+
+#### `graphics`
+
+This displays some graphics primitives that could be used for visualisations.
+
+```
+python3 ZX297520V3_hax.py screen_run graphics
+```
+
+<img src="images/readme/graphics.jpg" width="250">
+
+#### `mandelbrot`
+
+This displays a visualisation of the mandelbrot set computed on the device.
+
+```
+python3 ZX297520V3_hax.py screen_run mandelbrot
+```
+
+<img src="images/readme/mandelbrot.jpg" width="250">
+
+#### `draw_image`
+
+This displays an image on the screen, it must be of the ffmpeg `rgb565be` format and 128x128. You can use the following to convert from 128x128 image to `rgb565be` format:
+
+```
+ffmpeg -i repo_logo.png -pix_fmt rgb565be repo_logo.rgb
+```
+
+Usage:
+
+```
+python3 ZX297520V3_hax.py screen_run draw_image images/walter.rgb
+```
+
+<img src="images/readme/waltuh.jpg" width="250">
 
 ### `flappy`
 
@@ -59,7 +99,7 @@ Runs through the process of getting pre-auth flappy bird execution by fetching t
 python3 ZX297520V3_hax.py flappy
 ```
 
-![alt text](images/flappy.gif)
+<img src="images/readme/flappy.gif" width="250">
 
 ### `enterfold`
 
@@ -197,7 +237,7 @@ PoC for stack overflow in REMOVE_WHITE_SITE goform set command - device will cra
 python3 ZX297520V3_hax.py REMOVE_WHITE_SITE_overflow
 ```
 
-![alt text](images/zte_mainctrl_crash.png)
+![alt text](images/readme/zte_mainctrl_crash.png)
 
 ### `CHANGE_MAC_overflow`
 
@@ -207,7 +247,7 @@ PoC for stack overflow in CHANGE_MAC goform set command - device will crash, can
 python3 ZX297520V3_hax.py CHANGE_MAC_overflow
 ```
 
-![alt text](images/mac_gdb.png)
+![alt text](images/readme/mac_gdb.png)
 
 ### `GOFORM_DELETE_SMS_crash`
 
@@ -217,7 +257,7 @@ PoC for crash in GOFORM_DELETE_SMS goform set command
 python3 ZX297520V3_hax.py GOFORM_DELETE_SMS_crash
 ```
 
-![alt text](images/sms_msg_id_overflow.png)
+![alt text](images/readme/sms_msg_id_overflow.png)
 
 ### `GOFORM_MOVE_TO_SIM_crash`
 

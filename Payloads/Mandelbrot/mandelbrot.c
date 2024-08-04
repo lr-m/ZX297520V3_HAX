@@ -50,7 +50,8 @@ typedef struct lcd_info {
 unsigned int init_lcd(void);
 unsigned int get_lcd_info(LCD_INFO *info);
 unsigned int lcd_set_brightness(unsigned int brightness);
-unsigned int lcd_backlight_enable(void);
+unsigned int lcd_set_backlight(unsigned int setting);
+unsigned int lcd_set_sleep(unsigned int setting);
 unsigned int write_to_fb0(unsigned char* framebuffer, unsigned int size);
 void fill_screen(unsigned char* framebuffer, unsigned short color);
 void draw_pixel(unsigned char* framebuffer, int x, int y, unsigned short color);
@@ -138,9 +139,9 @@ unsigned int lcd_set_brightness(unsigned int brightness)
     return 0;
 }
 
-unsigned int lcd_backlight_enable(void)
+unsigned int lcd_set_backlight(unsigned int setting)
 {
-    unsigned int local_c[3] = { 1 };
+    unsigned int local_c[3] = { setting };
 
     if (ioctl(framebuffer_fd, 0x40044c02, local_c) < 0) {
         perror("Enabling backlight failed");
@@ -148,6 +149,19 @@ unsigned int lcd_backlight_enable(void)
     }
 
     printf("Backlight enabled successfully.\n");
+    return 0;
+}
+
+unsigned int lcd_set_sleep(unsigned int setting)
+{
+    unsigned int local_c[3] = { setting };
+
+    if (ioctl(framebuffer_fd, 0x40044c01, local_c) < 0) {
+        perror("Setting brightness failed");
+        return 0xffffffff;
+    }
+
+    printf("Brightness set successfully.\n");
     return 0;
 }
 
@@ -241,7 +255,8 @@ int main(void)
 
     fill_screen(lcd_info.framebuffer, BLACK); // Clear framebuffer to black
 
-    lcd_backlight_enable();
+    lcd_set_sleep(0);
+    lcd_set_backlight(1);
 
     draw_mandelbrot(lcd_info.framebuffer);
 

