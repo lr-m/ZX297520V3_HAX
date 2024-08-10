@@ -117,6 +117,30 @@ Exploits a file write vulnerability to upload specified file to `/tmp`.
 python3 ZX297520V3_hax.py upload_file *filename*
 ```
 
+### `mkdir`
+
+Uses directory traversal in pre-auth `HTTPSHARE_NEW` handler to create a directory in any specified location provided it is writeable.
+
+```
+python3 ZX297520V3_hax.py mkdir *full path*
+```
+
+### `remove`
+
+Uses directory traversal in pre-auth `HTTPSHARE_DEL` handler to remove file in any specified location provided it is writeable.
+
+```
+python3 ZX297520V3_hax.py remove *full path to containing directory* *filename* 
+```
+
+### `rename`
+
+Uses directory traversal in pre-auth `HTTPSHARE_FILE_RENAME` handler to rename file in any specified location provided it is writeable.
+
+```
+python3 ZX297520V3_hax.py rename *old file full path* *new file full path*
+```
+
 ### `arb_cfg_clear_v1`
 
 Exploits a config clear bug to wipe specified config value pre-auth, this can lock out the admin, and probably cause other interesting issues.

